@@ -52,9 +52,10 @@ body {
 }
 
 .header h1 {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-1);
+  letter-spacing: -0.02em;
 }
 
 /* URL Input */
@@ -68,13 +69,14 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   color: var(--text-1);
-  font-size: 13px;
+  font-size: 14px;
   font-family: var(--font-main);
   outline: none;
   transition: border-color 0.2s;
   width: 100%;
+  min-height: 44px;
 }
 
 .input-field:focus {
@@ -89,7 +91,8 @@ body {
   font-size: 12px;
   color: var(--text-2);
   padding: 0 4px;
-  min-height: 16px;
+  min-height: 18px;
+  line-height: 1.4;
 }
 
 /* Tabs */
@@ -103,16 +106,17 @@ body {
 
 .tab {
   flex: 1;
-  padding: 8px 0;
+  padding: 10px 0;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   font-family: var(--font-main);
+  min-height: 44px;
 }
 
 .tab.active {
@@ -138,7 +142,7 @@ body {
   border-radius: 10px;
   padding: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .option-card:hover {
@@ -148,6 +152,7 @@ body {
 .option-card.selected {
   border-color: var(--accent);
   background: var(--selected-bg);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .option-card .label {
@@ -158,7 +163,7 @@ body {
 }
 
 .option-card .desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-2);
   line-height: 1.4;
 }
@@ -192,8 +197,9 @@ body {
 }
 
 .download-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.35;
   cursor: not-allowed;
+  filter: grayscale(0.3);
 }
 
 .download-btn.cancel {
@@ -267,12 +273,13 @@ body {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-2);
-  padding: 3px 10px;
-  border-radius: 5px;
-  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   font-family: var(--font-main);
+  min-height: 32px;
 }
 
 .path-change-btn:hover {
