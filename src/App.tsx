@@ -3,6 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
+const APP_VERSION = "1.0.0";
+const BUILD_DATE = "2026-03-27";
+
 type Tab = "audio" | "video" | "subtitle";
 
 interface ToastState {
@@ -38,6 +41,7 @@ function App() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
   const titleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -126,9 +130,58 @@ function App() {
     <div className="app">
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
-      <div className="header">
+      {/* About 모달 */}
+      {showAbout && (
+        <div className="modal-overlay" onClick={() => setShowAbout(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-icon">🟠</span>
+              <span className="modal-title">yt-dlp 다운로더</span>
+            </div>
+            <div className="modal-body">
+              <div className="modal-row">
+                <span className="modal-label">앱 버전</span>
+                <span className="modal-value">v{APP_VERSION}</span>
+              </div>
+              <div className="modal-row">
+                <span className="modal-label">빌드 날짜</span>
+                <span className="modal-value">{BUILD_DATE}</span>
+              </div>
+              <div className="modal-row">
+                <span className="modal-label">yt-dlp</span>
+                <span className="modal-value">
+                  {ytdlpVersion ? `v${ytdlpVersion}` : "미설치"}
+                </span>
+              </div>
+              <div className="modal-row">
+                <span className="modal-label">프레임워크</span>
+                <span className="modal-value">Tauri v2 + React</span>
+              </div>
+              <div className="modal-row">
+                <span className="modal-label">저장 경로</span>
+                <span className="modal-value mono">{outputDir}</span>
+              </div>
+              <div className="modal-divider" />
+              <div className="modal-features">
+                <div className="modal-feature-title">지원 기능</div>
+                <div className="modal-feature">오디오 추출 (WAV / MP3)</div>
+                <div className="modal-feature">영상 다운로드 (최고화질 / 1080p)</div>
+                <div className="modal-feature">자막 (VTT + 텍스트 자동 추출)</div>
+                <div className="modal-feature">자막 하드코딩 내장</div>
+                <div className="modal-feature">영상별 폴더 자동 생성</div>
+              </div>
+            </div>
+            <button className="modal-close-btn" onClick={() => setShowAbout(false)}>
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="header" onClick={() => setShowAbout(true)} style={{ cursor: "pointer" }}>
         <span className="header-icon">🟠</span>
         <h1>yt-dlp 다운로더</h1>
+        <span className="header-version">v{APP_VERSION}</span>
       </div>
 
       {ytdlpMissing && (
