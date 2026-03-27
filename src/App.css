@@ -84,7 +84,7 @@ body {
 }
 
 .input-field::placeholder {
-  color: var(--text-3);
+  color: #6b5a48;
 }
 
 .title-preview {

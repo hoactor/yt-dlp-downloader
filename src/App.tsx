@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 
 const APP_VERSION = "1.0.0";
@@ -266,8 +267,12 @@ function App() {
           <span className="path-value">{outputDir}</span>
           <button
             className="path-change-btn"
-            onClick={() => {
-              /* Phase 3에서 dialog 플러그인으로 구현 */
+            onClick={async () => {
+              const selected = await open({ directory: true, defaultPath: outputDir });
+              if (selected) {
+                setOutputDir(selected as string);
+                await invoke("save_output_dir", { dir: selected as string });
+              }
             }}
           >
             변경

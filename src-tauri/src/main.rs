@@ -118,11 +118,39 @@ async fn fetch_title(url: String) -> Result<String, String> {
     }
 }
 
+fn config_path() -> std::path::PathBuf {
+    let mut p = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    p.push("yt-dlp-downloader");
+    let _ = fs::create_dir_all(&p);
+    p.push("settings.json");
+    p
+}
+
 #[tauri::command]
 async fn get_default_download_dir() -> Result<String, String> {
-    dirs::download_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .ok_or_else(|| "다운로드 폴더를 찾을 수 없습니다.".to_string())
+    let cfg = config_path();
+    if cfg.exists() {
+        if let Ok(data) = fs::read_to_string(&cfg) {
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&data) {
+                if let Some(dir) = v.get("output_dir").and_then(|d| d.as_str()) {
+                    if Path::new(dir).exists() {
+                        return Ok(dir.to_string());
+                    }
+                }
+            }
+        }
+    }
+    let default_dir = "/Users/honamgung/Documents/00_유튜브_영상_다운로드";
+    let _ = fs::create_dir_all(default_dir);
+    Ok(default_dir.to_string())
+}
+
+#[tauri::command]
+async fn save_output_dir(dir: String) -> Result<(), String> {
+    let cfg = config_path();
+    let json = serde_json::json!({ "output_dir": dir });
+    fs::write(&cfg, serde_json::to_string_pretty(&json).unwrap())
+        .map_err(|e| format!("설정 저장 실패: {}", e))
 }
 
 #[derive(Clone, Serialize)]
@@ -359,12 +387,14 @@ async fn cancel_download() -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             check_ytdlp,
             fetch_title,
             download,
             cancel_download,
             get_default_download_dir,
+            save_output_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
