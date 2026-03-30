@@ -34,8 +34,8 @@ function App() {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [filename, setFilename] = useState("");
-  const [tab, setTab] = useState<Tab>("audio");
-  const [selectedMode, setSelectedMode] = useState("audio_wav");
+  const [tab, setTab] = useState<Tab>("video");
+  const [selectedMode, setSelectedMode] = useState("video_best");
   const [outputDir, setOutputDir] = useState("");
   const [ytdlpVersion, setYtdlpVersion] = useState("");
   const [ytdlpMissing, setYtdlpMissing] = useState(false);
@@ -211,7 +211,7 @@ function App() {
       </div>
 
       <div className="tabs">
-        {(["audio", "video", "subtitle"] as Tab[]).map((t) => (
+        {(["video", "subtitle", "audio"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`tab ${tab === t ? "active" : ""}`}
