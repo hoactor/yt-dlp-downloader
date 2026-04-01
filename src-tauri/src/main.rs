@@ -13,6 +13,26 @@ use std::path::Path;
 
 static CHILD_PID: Mutex<Option<u32>> = Mutex::new(None);
 
+/// 영상 폴더에 원본 YouTube 링크 바로가기(.webloc) 생성
+fn create_webloc(folder: &Path, url: &str) {
+    let webloc_path = folder.join("원본 링크.webloc");
+    if webloc_path.exists() {
+        return;
+    }
+    let content = format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<string>{}</string>
+</dict>
+</plist>"#,
+        url
+    );
+    let _ = fs::write(&webloc_path, content);
+}
+
 /// .vtt 파일에서 타임스탬프와 태그를 제거하고 순수 텍스트만 추출하여 .txt로 저장
 fn vtt_to_txt(vtt_path: &Path) {
     let content = match fs::read_to_string(vtt_path) {
@@ -272,6 +292,19 @@ async fn download(
         }
     }
 
+    // 다운로드 전 기존 폴더 목록 기억 (새 폴더에만 webloc 생성용)
+    let existing_dirs: std::collections::HashSet<std::path::PathBuf> = fs::read_dir(&output_dir)
+        .map(|entries| {
+            entries
+                .flatten()
+                .filter_map(|e| {
+                    let p = e.path();
+                    if p.is_dir() { Some(p) } else { None }
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
     // stderr를 stdout에 합쳐서 진행률 + 경고 모두 캡처
     let mut child = Command::new(&bin)
         .args(&args)
@@ -332,6 +365,16 @@ async fn download(
     let is_real_error = !status.success() && has_fatal_error;
 
     if !is_real_error {
+        // 새로 생성된 폴더에 원본 링크 바로가기 생성
+        if let Ok(entries) = fs::read_dir(&output_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() && !existing_dirs.contains(&path) {
+                    create_webloc(&path, &url);
+                }
+            }
+        }
+
         // 자막이 포함된 모드면 .vtt → .txt 자동 변환
         let has_subs = matches!(mode.as_str(), "sub_only" | "video_sub" | "video_hardsub");
         if has_subs {
