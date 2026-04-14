@@ -274,6 +274,17 @@ async fn download(
     args.push("--newline".to_string());
     args.push("--no-colors".to_string());
 
+    // 429 방지: iOS/Android 클라이언트 사용 (웹보다 레이트 리밋이 느슨함)
+    args.extend([
+        "--extractor-args",
+        "youtube:player_client=ios,android,web",
+    ].map(String::from));
+    // 재시도 줄임 (429 나면 더 반복해도 소용없음)
+    args.extend(["--retries", "2"].map(String::from));
+    args.extend(["--extractor-retries", "1"].map(String::from));
+    args.extend(["--sleep-requests", "1.5"].map(String::from));
+    args.extend(["--sleep-subtitles", "3"].map(String::from));
+
     // Node.js 런타임 자동 탐지 (yt-dlp YouTube 파싱에 필요)
     for node_path in ["/opt/homebrew/bin/node", "/usr/local/bin/node"] {
         if std::path::Path::new(node_path).exists() {
@@ -361,8 +372,22 @@ async fn download(
     *CHILD_PID.lock().unwrap() = None;
 
     // yt-dlp의 진짜 에러는 "ERROR:" 접두사가 붙음. 그 외(WARNING 등)는 성공 처리
-    let has_fatal_error = stderr_output.lines().any(|l| l.trim_start().starts_with("ERROR:"));
-    let is_real_error = !status.success() && has_fatal_error;
+    // 단, 영상 모드에서 자막 관련 에러는 영상이 받아졌으면 무시
+    let is_video_mode = matches!(mode.as_str(), "video_sub" | "video_hardsub" | "video_best" | "video_1080");
+    let fatal_errors: Vec<&str> = stderr_output
+        .lines()
+        .filter(|l| l.trim_start().starts_with("ERROR:"))
+        .collect();
+    let subtitle_only_errors = !fatal_errors.is_empty()
+        && fatal_errors.iter().all(|e| {
+            e.contains("subtitles")
+                || e.contains("No subtitles")
+                || e.contains("Unable to download video subtitles")
+        });
+    // 영상 모드 + 자막 에러만 있으면 진짜 에러 아님
+    let is_real_error = !status.success()
+        && !fatal_errors.is_empty()
+        && !(is_video_mode && subtitle_only_errors);
 
     if !is_real_error {
         // 새로 생성된 폴더에 원본 링크 바로가기 생성

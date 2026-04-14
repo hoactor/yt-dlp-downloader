@@ -35,7 +35,7 @@ function App() {
   const [title, setTitle] = useState("");
   const [filename, setFilename] = useState("");
   const [tab, setTab] = useState<Tab>("video");
-  const [selectedMode, setSelectedMode] = useState("video_best");
+  const [selectedMode, setSelectedMode] = useState("video_1080");
   const [outputDir, setOutputDir] = useState("");
   const [ytdlpVersion, setYtdlpVersion] = useState("");
   const [ytdlpMissing, setYtdlpMissing] = useState(false);
@@ -87,7 +87,7 @@ function App() {
   const handleTabChange = (newTab: Tab) => {
     setTab(newTab);
     if (newTab === "audio") setSelectedMode("audio_wav");
-    else if (newTab === "video") setSelectedMode("video_best");
+    else if (newTab === "video") setSelectedMode("video_1080");
     else setSelectedMode("sub_only");
   };
 
