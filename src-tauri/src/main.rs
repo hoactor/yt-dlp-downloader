@@ -14,23 +14,27 @@ use std::path::Path;
 static CHILD_PID: Mutex<Option<u32>> = Mutex::new(None);
 
 /// 영상 폴더에 원본 YouTube 링크 바로가기(.webloc) 생성
+/// macOS Finder에서 더블클릭 시 Safari/Chrome에서 열림
 fn create_webloc(folder: &Path, url: &str) {
     let webloc_path = folder.join("원본 링크.webloc");
     if webloc_path.exists() {
         return;
     }
+    // macOS .webloc 표준 plist 포맷 (탭 대신 스페이스, LF 줄바꿈)
     let content = format!(
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>URL</key>
-	<string>{}</string>
-</dict>
-</plist>"#,
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
+<plist version=\"1.0\">\n\
+<dict>\n    <key>URL</key>\n    <string>{}</string>\n</dict>\n</plist>\n",
         url
     );
     let _ = fs::write(&webloc_path, content);
+
+    // 추가로 .txt에도 URL 저장 (확실한 대체 수단)
+    let txt_path = folder.join("원본 링크.txt");
+    if !txt_path.exists() {
+        let _ = fs::write(&txt_path, url);
+    }
 }
 
 /// .vtt 파일에서 타임스탬프와 태그를 제거하고 순수 텍스트만 추출하여 .txt로 저장
@@ -218,14 +222,14 @@ async fn download(
         }
         "video_best" => {
             args.extend(
-                ["-f", "bestvideo+bestaudio", "--merge-output-format", "mp4"].map(String::from),
+                ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"].map(String::from),
             );
         }
         "video_1080" => {
             args.extend(
                 [
                     "-f",
-                    "bestvideo[height<=1080]+bestaudio",
+                    "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
                     "--merge-output-format",
                     "mp4",
                 ]
@@ -245,7 +249,7 @@ async fn download(
                     "--sub-langs",
                     "ko",
                     "-f",
-                    "bestvideo+bestaudio",
+                    "bestvideo+bestaudio/best",
                     "--merge-output-format",
                     "mp4",
                 ]
@@ -260,7 +264,7 @@ async fn download(
                     "ko",
                     "--embed-subs",
                     "-f",
-                    "bestvideo+bestaudio",
+                    "bestvideo+bestaudio/best",
                     "--merge-output-format",
                     "mp4",
                 ]
@@ -390,36 +394,42 @@ async fn download(
         && !(is_video_mode && subtitle_only_errors);
 
     if !is_real_error {
-        // 새로 생성된 폴더에 원본 링크 바로가기 생성
+        // 새로 생성된 폴더 찾기
+        let mut new_folders: Vec<std::path::PathBuf> = Vec::new();
         if let Ok(entries) = fs::read_dir(&output_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() && !existing_dirs.contains(&path) {
-                    create_webloc(&path, &url);
+                    new_folders.push(path);
                 }
             }
         }
 
-        // 자막이 포함된 모드면 .vtt → .txt 자동 변환
+        // 자막 모드면 .vtt 파일이 실제로 생성됐는지 확인
         let has_subs = matches!(mode.as_str(), "sub_only" | "video_sub" | "video_hardsub");
+        let mut vtt_found = false;
         if has_subs {
-            // output_dir 하위에서 .vtt 파일 찾기
-            if let Ok(entries) = fs::read_dir(&output_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        // 영상제목 폴더 안에서 .vtt 찾기
-                        if let Ok(sub_entries) = fs::read_dir(&path) {
-                            for sub_entry in sub_entries.flatten() {
-                                let sub_path = sub_entry.path();
-                                if sub_path.extension().map_or(false, |e| e == "vtt") {
-                                    vtt_to_txt(&sub_path);
-                                }
-                            }
+            for folder in &new_folders {
+                if let Ok(sub_entries) = fs::read_dir(folder) {
+                    for sub_entry in sub_entries.flatten() {
+                        let sub_path = sub_entry.path();
+                        if sub_path.extension().map_or(false, |e| e == "vtt") {
+                            vtt_found = true;
+                            vtt_to_txt(&sub_path);
                         }
                     }
                 }
             }
+        }
+
+        // sub_only 모드에서 자막 파일이 없으면 실패 처리
+        if mode == "sub_only" && !vtt_found {
+            return Err("자막 다운로드에 실패했습니다. (자막이 없거나 YouTube 레이트 리밋)".to_string());
+        }
+
+        // 링크 바로가기 생성
+        for folder in &new_folders {
+            create_webloc(folder, &url);
         }
 
         let _ = app.emit(
