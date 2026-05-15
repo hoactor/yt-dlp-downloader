@@ -16,7 +16,8 @@
         "width": 520,
         "height": 700,
         "resizable": true,
-        "decorations": true
+        "decorations": true,
+        "dragDropEnabled": true
       }
     ],
     "security": {

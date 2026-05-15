@@ -237,6 +237,160 @@ body {
   font-family: var(--font-mono);
 }
 
+/* Live status */
+.live-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--error);
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: live-pulse 1.4s infinite;
+}
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.live-label {
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+.live-elapsed {
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  padding-left: 20px;
+}
+
+/* Live tab marker */
+.tab.tab-live:not(.active) {
+  color: var(--error);
+}
+
+.tab.tab-live.active {
+  background: var(--error);
+}
+
+/* Whisper tab marker */
+.tab.tab-whisper:not(.active) {
+  color: #a78bfa;
+}
+
+.tab.tab-whisper.active {
+  background: #8b5cf6;
+}
+
+/* Whisper panel */
+.whisper-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drop-zone {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.drop-zone:hover {
+  border-color: var(--text-2);
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--selected-bg);
+}
+
+.drop-zone.has-file {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.drop-zone-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.drop-zone-text {
+  font-size: 14px;
+  color: var(--text-1);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.drop-zone-filename {
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  margin-bottom: 6px;
+  word-break: break-all;
+  padding: 0 8px;
+}
+
+.drop-zone-hint {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.whisper-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.whisper-label {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.whisper-select {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text-1);
+  font-size: 13px;
+  font-family: var(--font-main);
+  outline: none;
+  cursor: pointer;
+}
+
+.whisper-select:focus {
+  border-color: var(--accent);
+}
+
 /* Footer */
 .footer {
   margin-top: auto;
